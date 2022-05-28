@@ -1,21 +1,18 @@
-use std::{
-    io::{self, BufRead},
-    net::TcpListener,
-};
+use std::net::TcpListener;
+
+use crate::LinesCodec;
 
 pub fn start() {
     let listener = TcpListener::bind("localhost:3030").unwrap();
 
-    for mut stream in listener.incoming().flatten() {
-        let mut reader = io::BufReader::new(&mut stream);
+    for stream in listener.incoming().flatten() {
+        let mut codec = LinesCodec::new(stream).unwrap();
 
-        let received: Vec<u8> = reader.fill_buf().unwrap().to_vec();
-
-        reader.consume(received.len());
-
-        String::from_utf8(received)
-            .map(|s| println!("{}", s))
-            .map_err(|_| println!("Error parsing received string as uff8"))
+        let message: String = codec
+            .read_message()
+            .map(|m| m.chars().rev().collect())
             .unwrap();
+
+        codec.send_message(&message).unwrap();
     }
 }
