@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use crate::{Request, Response};
+use crate::Request;
 
 pub fn start() {
     let listener = TcpListener::bind("localhost:3030").unwrap();
@@ -9,7 +9,7 @@ pub fn start() {
         let request = Request::deserialize(&mut stream).unwrap();
         match request {
             Request::Echo(msg) => println!("{}", msg),
-            Request::Jumble { message, amount } => todo!(),
+            Request::Jumble { .. } => todo!(),
         }
     }
 }
