@@ -1,18 +1,15 @@
 use std::net::TcpListener;
 
-use crate::LinesCodec;
+use crate::{Request, Response};
 
 pub fn start() {
     let listener = TcpListener::bind("localhost:3030").unwrap();
 
-    for stream in listener.incoming().flatten() {
-        let mut codec = LinesCodec::new(stream).unwrap();
-
-        let message: String = codec
-            .read_message()
-            .map(|m| m.chars().rev().collect())
-            .unwrap();
-
-        codec.send_message(&message).unwrap();
+    for mut stream in listener.incoming().flatten() {
+        let request = Request::deserialize(&mut stream).unwrap();
+        match request {
+            Request::Echo(msg) => println!("{}", msg),
+            Request::Jumble { message, amount } => todo!(),
+        }
     }
 }

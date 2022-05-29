@@ -1,15 +1,15 @@
-use std::net::TcpStream;
+use std::{io::Write, net::TcpStream};
 
-use crate::LinesCodec;
+use crate::Request;
 
 pub fn start() {
     match TcpStream::connect("localhost:3030") {
-        Ok(stream) => {
+        Ok(mut stream) => {
             println!("Connection successfull on port 3030");
-            let mut codec = LinesCodec::new(stream).unwrap();
-            codec.send_message("does this still work?").unwrap();
 
-            println!("{}", codec.read_message().unwrap());
+            let req = Request::Echo("does this really still work?".to_string());
+            let _serialized = req.serialize(&mut stream);
+            stream.flush().unwrap();
         }
         Err(e) => {
             println!("Failed to connect: {}", e);
