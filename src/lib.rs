@@ -1,6 +1,6 @@
-use crate::request::Request;
 use byteorder::{NetworkEndian, ReadBytesExt};
 use std::io::{self, Read};
+
 pub mod client;
 pub mod request;
 pub mod response;
@@ -17,13 +17,13 @@ fn extract_string(buf: &mut impl Read) -> io::Result<String> {
 
 #[test]
 fn test_request_roundtrip() {
-    let req = Request::Echo(String::from("Hello"));
+    let req = request::Request::Echo(String::from("Hello"));
 
     let mut bytes: Vec<u8> = vec![];
     req.serialize(&mut bytes).unwrap();
 
     let mut reader = io::Cursor::new(bytes); // Simulating TcpStream
-    let roundtrip_req = Request::deserialize(&mut reader).unwrap();
+    let roundtrip_req = request::Request::deserialize(&mut reader).unwrap();
 
-    assert!(matches!(roundtrip_req, Request::Echo(_)));
+    assert!(matches!(roundtrip_req, request::Request::Echo(_)));
 }

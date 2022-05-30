@@ -1,3 +1,5 @@
+use std::net::SocketAddr;
+
 use clap::{ArgEnum, Parser};
 use pft::{client, server};
 
@@ -21,9 +23,10 @@ enum Mode {
 
 fn main() {
     let args = Args::parse();
+    let address = SocketAddr::from(([127, 0, 0, 1], 3030));
 
     match args.mode {
-        Mode::Server => server::start(),
-        Mode::Client => client::start(),
+        Mode::Server => server::start(&address),
+        Mode::Client => client::start(&address),
     }
 }

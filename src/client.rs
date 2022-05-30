@@ -1,13 +1,11 @@
 use std::{
     fs::File,
     io::{Read, Write},
-    net::TcpStream,
+    net::{SocketAddr, TcpStream},
 };
 
-use crate::Request;
-
-pub fn start() {
-    match TcpStream::connect("localhost:3030") {
+pub fn start(address: &SocketAddr) {
+    match TcpStream::connect(address) {
         Ok(mut stream) => {
             println!("Connection successfull on port 3030");
 
