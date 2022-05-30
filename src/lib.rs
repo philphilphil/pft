@@ -17,7 +17,7 @@ fn extract_string(buf: &mut impl Read) -> io::Result<String> {
 
 #[test]
 fn test_request_roundtrip() {
-    let req = request::Request::Echo(String::from("Hello"));
+    let req = request::Request::TestOTP(String::from("Hello"));
 
     let mut bytes: Vec<u8> = vec![];
     req.serialize(&mut bytes).unwrap();
@@ -25,5 +25,5 @@ fn test_request_roundtrip() {
     let mut reader = io::Cursor::new(bytes); // Simulating TcpStream
     let roundtrip_req = request::Request::deserialize(&mut reader).unwrap();
 
-    assert!(matches!(roundtrip_req, request::Request::Echo(_)));
+    assert!(matches!(roundtrip_req, request::Request::TestOTP(_)));
 }

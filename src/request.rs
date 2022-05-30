@@ -5,16 +5,16 @@ use std::io::{self, Read, Write};
 #[derive(Debug)]
 pub enum Request {
     /// Echo back
-    Echo(String),
+    TestOTP(String),
     /// Jumbmle
-    Jumble { message: String, amount: u16 },
+    UploadFile { filename: String, amount: u16 },
 }
 
 impl From<&Request> for u8 {
     fn from(req: &Request) -> Self {
         match req {
-            Request::Echo(_) => 1,
-            Request::Jumble { .. } => 2,
+            Request::TestOTP(_) => 1,
+            Request::UploadFile { .. } => 2,
         }
     }
 }
@@ -24,12 +24,15 @@ impl Request {
         buf.write_u8(self.into())?;
 
         match self {
-            Request::Echo(message) => {
+            Request::TestOTP(message) => {
                 let message = message.as_bytes();
                 buf.write_u16::<NetworkEndian>(message.len() as u16)?;
                 buf.write_all(message)?;
             }
-            Request::Jumble { message, amount } => {
+            Request::UploadFile {
+                filename: message,
+                amount,
+            } => {
                 let message = message.as_bytes();
                 buf.write_u16::<NetworkEndian>(message.len() as u16)?;
                 buf.write_all(message)?;
@@ -43,13 +46,16 @@ impl Request {
 
     pub fn deserialize(mut buf: &mut impl Read) -> io::Result<Request> {
         match buf.read_u8()? {
-            1 => Ok(Request::Echo(extract_string(&mut buf)?)),
+            1 => Ok(Request::TestOTP(extract_string(&mut buf)?)),
             2 => {
                 let message = extract_string(&mut buf)?;
 
                 let _amount_len = buf.read_u16::<NetworkEndian>()?;
                 let amount = buf.read_u16::<NetworkEndian>()?;
-                Ok(Request::Jumble { message, amount })
+                Ok(Request::UploadFile {
+                    filename: message,
+                    amount,
+                })
             }
             _ => todo!(),
         }
