@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::{self, Read, Write},
-    net::{SocketAddr, TcpStream},
+    net::{Shutdown, SocketAddr, TcpStream},
 };
 
 use crate::{request::Request, response::Response};
@@ -18,11 +18,12 @@ pub fn start(address: &SocketAddr) {
             //let req = Request::TestOTP(buffer);
 
             let req = Request::UploadFile {
-                filename: "testfile.zip".to_string(),
+                filename: "testfile.txt".to_string(),
             };
 
             let _serialized = req.serialize(&mut stream);
             stream.flush().unwrap();
+            stream.shutdown(Shutdown::Write).unwrap();
 
             let response = Response::deserialize(&mut stream).unwrap();
             println!("{}", response.0);

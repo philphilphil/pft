@@ -57,13 +57,13 @@ impl Request {
                 let mut file = File::create(&filename).unwrap();
                 println!("c");
 
-                loop {
-                    io::copy(&mut buf, &mut file).unwrap();
+                // loop {
+                io::copy(&mut buf, &mut file).unwrap();
 
-                    if buf.bytes().count() == 0 {
-                        break;
-                    }
-                }
+                // if buf.bytes().count() == 0 {
+                //     break;
+                // }
+                // }
                 println!("d");
 
                 println!("Successfully transfered file {}.", &filename);
