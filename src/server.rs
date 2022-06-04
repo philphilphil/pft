@@ -1,12 +1,8 @@
-use std::{
-    fs::File,
-    io,
-    net::{SocketAddr, TcpListener},
-};
+use std::net::{SocketAddr, TcpListener};
 
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
-use crate::request::Request;
+use crate::{request::Request, response::Response};
 
 pub fn start(address: &SocketAddr) {
     let otp: String = thread_rng()
@@ -21,8 +17,6 @@ pub fn start(address: &SocketAddr) {
     println!("One-time password: {}", otp);
 
     for mut stream in listener.incoming().flatten() {
-        // let mut file = File::create("downloadedfiles.txt").unwrap();
-        // io::copy(&mut stream, &mut file).unwrap();
         let request = Request::deserialize(&mut stream).unwrap();
         match request {
             Request::TestOTP(msg) => {
@@ -31,6 +25,8 @@ pub fn start(address: &SocketAddr) {
                         "Successfull OTP test attempt from {}",
                         stream.peer_addr().unwrap()
                     );
+                    let resp = Response("asd".to_string());
+                    resp.serialize(&mut stream).unwrap();
                 } else {
                     println!(
                         "Failed OTP test attempt from {}",
@@ -38,7 +34,10 @@ pub fn start(address: &SocketAddr) {
                     );
                 }
             }
-            Request::UploadFile { .. } => todo!(),
+            Request::UploadFile { filename: _ } => {
+                let resp = Response("Successfully transfered.".to_string());
+                resp.serialize(&mut stream).unwrap();
+            }
         }
     }
 }

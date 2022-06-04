@@ -12,6 +12,7 @@ impl Response {
         buf.write_all(message)?;
         Ok(())
     }
+
     pub fn deserialize(mut buf: &mut impl Read) -> io::Result<Response> {
         Ok(Response(extract_string(&mut buf).unwrap()))
     }
