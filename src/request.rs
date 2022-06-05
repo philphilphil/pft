@@ -53,7 +53,7 @@ impl Request {
         Ok(())
     }
 
-    pub fn deserialize(mut buf: &mut impl Read, address: &SocketAddr) -> io::Result<Request> {
+    pub fn deserialize(mut buf: &mut impl Read, address: &str) -> io::Result<Request> {
         match buf.read_u8()? {
             1 => {
                 let filename = format!("server/{}", extract_string(&mut buf)?);

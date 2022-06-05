@@ -27,6 +27,8 @@ pub fn start(address: &SocketAddr) {
         }
     };
 
+    let client_addr = listener.local_addr().unwrap().to_string();
+
     println!("Starting pft server v{}.", env!("CARGO_PKG_VERSION"));
     println!("Listening on {}", address);
     println!("One-time password: {}", cotp);
@@ -37,7 +39,7 @@ pub fn start(address: &SocketAddr) {
                 break;
             }
 
-            let request = Request::deserialize(&mut stream, &address).unwrap();
+            let request = Request::deserialize(&mut stream, &client_addr).unwrap();
             match request {
                 Request::AnnounceFileTransfer { filename, otp } => {
                     if cotp != otp {
@@ -47,7 +49,7 @@ pub fn start(address: &SocketAddr) {
                         };
                         resp.serialize(&mut stream).unwrap();
                         stream.flush().unwrap();
-                        println!("ERROR [{}]: Invalid OTP received.", address);
+                        println!("ERROR [{}]: Invalid OTP received.", client_addr);
                         continue;
                     }
 
@@ -58,7 +60,10 @@ pub fn start(address: &SocketAddr) {
                         };
                         resp.serialize(&mut stream).unwrap();
                         stream.flush().unwrap();
-                        println!(r#"ERROR [{}]: File "{}" alraedy exist."#, address, filename);
+                        println!(
+                            r#"ERROR [{}]: File "{}" alraedy exist."#,
+                            client_addr, filename
+                        );
                     } else {
                         let resp = Response {
                             message: String::new(),
