@@ -22,7 +22,7 @@ pub fn start(address: &SocketAddr) {
     let listener = match TcpListener::bind(address) {
         Ok(l) => l,
         Err(e) => {
-            println!("ERROR: Can't bind to address {}: {}", address, e);
+            println!("ERROR. Can't bind to address {}: {}", address, e);
             return;
         }
     };
@@ -37,8 +37,7 @@ pub fn start(address: &SocketAddr) {
                 break;
             }
 
-            let request = Request::deserialize(&mut stream).unwrap();
-
+            let request = Request::deserialize(&mut stream, &address).unwrap();
             match request {
                 Request::AnnounceFileTransfer { filename, otp } => {
                     if cotp != otp {
@@ -48,7 +47,7 @@ pub fn start(address: &SocketAddr) {
                         };
                         resp.serialize(&mut stream).unwrap();
                         stream.flush().unwrap();
-                        println!("ERROR: Invalid OTP from {}", address);
+                        println!("ERROR [{}]: Invalid OTP received.", address);
                         continue;
                     }
 
@@ -59,7 +58,7 @@ pub fn start(address: &SocketAddr) {
                         };
                         resp.serialize(&mut stream).unwrap();
                         stream.flush().unwrap();
-                        println!("ERROR: File alraedy exist from {}", address);
+                        println!(r#"ERROR [{}]: File "{}" alraedy exist."#, address, filename);
                     } else {
                         let resp = Response {
                             message: String::new(),
@@ -69,9 +68,9 @@ pub fn start(address: &SocketAddr) {
                         stream.flush().unwrap();
                     }
                 }
-                Request::UploadFile { filename: _ } => {
+                Request::UploadFile { filename } => {
                     let resp = Response {
-                        message: "Successfully transfered.".to_string(),
+                        message: format!(r#"Successfully transfered "{}""#, filename),
                         error: None,
                     };
                     resp.serialize(&mut stream).unwrap();

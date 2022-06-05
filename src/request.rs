@@ -3,6 +3,7 @@ use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
 use std::{
     fs::File,
     io::{self, Read, Write},
+    net::SocketAddr,
 };
 
 #[derive(Debug)]
@@ -51,7 +52,7 @@ impl Request {
         Ok(())
     }
 
-    pub fn deserialize(mut buf: &mut impl Read) -> io::Result<Request> {
+    pub fn deserialize(mut buf: &mut impl Read, address: &SocketAddr) -> io::Result<Request> {
         match buf.read_u8()? {
             1 => {
                 let filename = format!("server/{}", extract_string(&mut buf)?);
@@ -59,13 +60,13 @@ impl Request {
                 Ok(Request::AnnounceFileTransfer { filename, otp })
             }
             2 => {
-                println!("Receiving file..");
+                println!("INFO [{}]: Receiving file..", address);
                 let filename = format!("server/{}", extract_string(&mut buf)?);
                 let mut file = File::create(&filename).unwrap();
 
                 io::copy(&mut buf, &mut file).unwrap();
 
-                println!("Successfully transfered file {}.", &filename);
+                println!("INFO [{}]: Successfully transfered {}.", address, &filename);
                 Ok(Request::UploadFile { filename })
             }
             _ => todo!(),
