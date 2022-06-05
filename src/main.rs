@@ -1,69 +1,63 @@
-use std::net::SocketAddr;
+use std::{
+    io,
+    net::{SocketAddr, ToSocketAddrs},
+    path::PathBuf,
+};
 
-use clap::{ArgEnum, ArgGroup, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 use pft::{client, server};
 
 #[derive(Parser)]
-#[clap(author, version, about, long_about = None)]
+#[clap(author, version, about="Very simple file transfer.", long_about = None)]
 struct Args {
     #[clap(subcommand)]
-    command: Commands,
-    // /// Mode to run as
-    // #[clap(arg_enum)]
-    // mode: Mode,
-
-    // /// Port to listen or sent to
-    // #[clap(short, default_value = "localhost")]
-    // host: String,
-
-    // /// Port to listen or sent to
-    // #[clap(short, long, long,parse(try_from_str=parse_port_input),default_value_t = 3030)]
-    // port: usize,
-
-    // /// One-time password for authentication
-    // #[clap(short, long)]
-    // otp: String,
+    command: Mode,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+#[derive(Subcommand)]
 enum Mode {
-    Server,
-    Client,
-}
-
-#[derive(Debug, Subcommand)]
-enum Commands {
+    /// Runs the client
     #[clap(arg_required_else_help = true)]
-    Clone {
-        /// The remote to clone
-        remote: String,
+    Client {
+        /// Address to sent to. Format: host:port
+        #[clap(required = true)]
+        address: String,
+        /// One-time password for authentication
+        #[clap(required = true)]
+        otp: String,
+        /// Path to the file to upload
+        #[clap(required = true, parse(from_os_str))]
+        file_path: PathBuf,
     },
-    /// pushes things
+    /// Runs the server
     #[clap(arg_required_else_help = true)]
-    Push {
-        /// The remote to target
-        remote: String,
+    Server {
+        /// Address to listen to. Format: host:port
+        #[clap(default_value = "localhost")]
+        address: String,
     },
 }
 
 fn main() {
     let args = Args::parse();
-    let address = SocketAddr::from(([127, 0, 0, 1], 3030));
-
-    // match args.mode {
-    //     Mode::Server => server::start(&address),
-    //     Mode::Client => client::start(&address),
-    // }
+    let address = match get_addr(&args.command) {
+        Ok(address) => address,
+        Err(e) => {
+            println!("ERROR: Invalid address: {}.", e);
+            return;
+        }
+    };
+    match args.command {
+        Mode::Server { .. } => server::start(&address),
+        Mode::Client { .. } => client::start(&address),
+    }
 }
 
-fn parse_port_input(input_port: &str) -> Result<usize, String> {
-    let port: usize = input_port
-        .parse()
-        .map_err(|_| format!("{} is not a valid number.", input_port))?;
+fn get_addr(mode: &Mode) -> io::Result<SocketAddr> {
+    let address = match mode {
+        Mode::Client { address, .. } | Mode::Server { address } => address,
+    };
 
-    if !(1..=65535).contains(&port) {
-        return Err(format!("{} is not a valid port.", port));
-    }
-
-    Ok(port)
+    let mut address = address.to_socket_addrs()?;
+    Ok(address.next().unwrap())
 }
