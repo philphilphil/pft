@@ -15,15 +15,15 @@ fn extract_string(buf: &mut impl Read) -> io::Result<String> {
     String::from_utf8(bytes).map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Invalid utf8"))
 }
 
-#[test]
-fn test_request_roundtrip() {
-    let req = request::Request::TestOTP(String::from("Hello"));
+// #[test]
+// fn test_request_roundtrip() {
+//     let req = request::Request::TestOTP(String::from("Hello"));
 
-    let mut bytes: Vec<u8> = vec![];
-    req.serialize(&mut bytes).unwrap();
+//     let mut bytes: Vec<u8> = vec![];
+//     req.serialize(&mut bytes).unwrap();
 
-    let mut reader = io::Cursor::new(bytes); // Simulating TcpStream
-    let roundtrip_req = request::Request::deserialize(&mut reader).unwrap();
+//     let mut reader = io::Cursor::new(bytes); // Simulating TcpStream
+//     let roundtrip_req = request::Request::deserialize(&mut reader).unwrap();
 
-    assert!(matches!(roundtrip_req, request::Request::TestOTP(_)));
-}
+//     assert!(matches!(roundtrip_req, request::Request::TestOTP(_)));
+// }

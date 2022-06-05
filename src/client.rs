@@ -1,32 +1,49 @@
 use std::{
-    fs::File,
-    io::{self, Read, Write},
+    io::Write,
     net::{Shutdown, SocketAddr, TcpStream},
+    path::PathBuf,
 };
 
 use crate::{request::Request, response::Response};
 
-pub fn start(address: &SocketAddr) {
+pub fn start(address: &SocketAddr, otp: String, filename: PathBuf) {
     match TcpStream::connect(address) {
         Ok(mut stream) => {
             println!("Connection successfull to {}", address);
-            //let mut buffer = String::new();
-            //let stdin = io::stdin(); // We get `Stdin` here.
-            //stdin.read_line(&mut buffer).unwrap();
-            //buffer.truncate(30); // remmove new line
-            //                     //
-            //let req = Request::TestOTP(buffer);
 
-            let req = Request::UploadFile {
-                filename: "testfile.txt".to_string(),
+            let announce_req = Request::AnnounceFileTransfer {
+                filename: filename.as_os_str().to_str().unwrap().to_string(),
+                otp,
             };
 
-            let _serialized = req.serialize(&mut stream);
+            announce_req.serialize(&mut stream).unwrap();
             stream.flush().unwrap();
-            stream.shutdown(Shutdown::Write).unwrap();
 
             let response = Response::deserialize(&mut stream).unwrap();
-            println!("{}", response.0);
+
+            if let Some(e) = response.error {
+                match e {
+                    crate::response::FileTransferError::InvalidOneTimePassword => {
+                        println!("ERROR: Invalid password.");
+                        return;
+                    }
+                    crate::response::FileTransferError::FileAlreadyExists => {
+                        println!("ERROR: File alredy exists.");
+                        return;
+                    }
+                }
+            } else {
+                let req = Request::UploadFile {
+                    filename: filename.as_os_str().to_str().unwrap().to_string(),
+                };
+
+                req.serialize(&mut stream).unwrap();
+                stream.flush().unwrap();
+                stream.shutdown(Shutdown::Write).unwrap();
+
+                let response = Response::deserialize(&mut stream).unwrap();
+                println!("{}", response.message);
+            }
         }
         Err(e) => {
             println!("ERROR: Failed to connect to {}: {}", address, e);

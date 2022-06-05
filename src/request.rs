@@ -7,16 +7,16 @@ use std::{
 
 #[derive(Debug)]
 pub enum Request {
-    /// Test if OTP password is valid
-    TestOTP(String),
-    /// Jumbmle
+    /// Announce file transfer to server
+    AnnounceFileTransfer { filename: String, otp: String },
+    /// Upload File
     UploadFile { filename: String },
 }
 
 impl From<&Request> for u8 {
     fn from(req: &Request) -> Self {
         match req {
-            Request::TestOTP(_) => 1,
+            Request::AnnounceFileTransfer { .. } => 1,
             Request::UploadFile { .. } => 2,
         }
     }
@@ -27,15 +27,19 @@ impl Request {
         buf.write_u8(self.into())?;
 
         match self {
-            Request::TestOTP(message) => {
-                let message = message.as_bytes();
-                buf.write_u16::<NetworkEndian>(message.len() as u16)?;
-                buf.write_all(message)?;
+            Request::AnnounceFileTransfer { filename, otp } => {
+                let filename = filename.as_bytes();
+                buf.write_u16::<NetworkEndian>(filename.len() as u16)?;
+                buf.write_all(filename)?;
+
+                let otp = otp.as_bytes();
+                buf.write_u16::<NetworkEndian>(otp.len() as u16)?;
+                buf.write_all(otp)?;
             }
             Request::UploadFile { filename } => {
-                let message = filename.as_bytes();
-                buf.write_u16::<NetworkEndian>(message.len() as u16)?;
-                buf.write_all(message)?;
+                let filename_bytes = filename.as_bytes();
+                buf.write_u16::<NetworkEndian>(filename_bytes.len() as u16)?;
+                buf.write_all(filename_bytes)?;
 
                 let mut file = File::open(filename).unwrap();
                 let mut file_buf = [0; 4096];
@@ -49,22 +53,17 @@ impl Request {
 
     pub fn deserialize(mut buf: &mut impl Read) -> io::Result<Request> {
         match buf.read_u8()? {
-            1 => Ok(Request::TestOTP(extract_string(&mut buf)?)),
+            1 => {
+                let filename = format!("server/{}", extract_string(&mut buf)?);
+                let otp = extract_string(&mut buf)?;
+                Ok(Request::AnnounceFileTransfer { filename, otp })
+            }
             2 => {
                 println!("Receiving file..");
                 let filename = format!("server/{}", extract_string(&mut buf)?);
-                println!("a");
                 let mut file = File::create(&filename).unwrap();
-                println!("c");
 
-                // loop {
                 io::copy(&mut buf, &mut file).unwrap();
-
-                // if buf.bytes().count() == 0 {
-                //     break;
-                // }
-                // }
-                println!("d");
 
                 println!("Successfully transfered file {}.", &filename);
                 Ok(Request::UploadFile { filename })

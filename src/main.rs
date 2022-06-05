@@ -49,7 +49,7 @@ fn main() {
     };
     match args.command {
         Mode::Server { .. } => server::start(&address),
-        Mode::Client { .. } => client::start(&address),
+        Mode::Client { otp, file_path, .. } => client::start(&address, otp, file_path),
     }
 }
 
