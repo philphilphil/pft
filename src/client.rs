@@ -25,11 +25,9 @@ pub fn start(address: &SocketAddr, otp: String, filename: PathBuf) {
                 match e {
                     crate::response::FileTransferError::InvalidOneTimePassword => {
                         println!("ERROR: Invalid password.");
-                        return;
                     }
                     crate::response::FileTransferError::FileAlreadyExists => {
                         println!("ERROR: File alredy exists.");
-                        return;
                     }
                 }
             } else {

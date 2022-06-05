@@ -1,5 +1,5 @@
 use std::{
-    io::{Read, Write},
+    io::Write,
     net::{SocketAddr, TcpListener},
     path::Path,
 };
