@@ -27,12 +27,11 @@ pub fn start(address: &SocketAddr) {
         }
     };
 
-    let client_addr = listener.local_addr().unwrap().to_string();
-
     println!("Starting pft server v{}.", env!("CARGO_PKG_VERSION"));
     println!("Listening on {}", address);
     println!("One-time password: {}", cotp);
     for mut stream in listener.incoming().flatten() {
+        let client_addr = stream.peer_addr().unwrap().to_string();
         loop {
             let mut peek_buf = [0; 10];
             if stream.peek(&mut peek_buf).unwrap() == 0 {
