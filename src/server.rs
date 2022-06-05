@@ -1,4 +1,7 @@
-use std::net::{SocketAddr, TcpListener};
+use std::{
+    io,
+    net::{SocketAddr, TcpListener},
+};
 
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
@@ -11,7 +14,14 @@ pub fn start(address: &SocketAddr) {
         .map(char::from)
         .collect();
 
-    let listener = TcpListener::bind(address).unwrap();
+    let listener = match TcpListener::bind(address) {
+        Ok(l) => l,
+        Err(e) => {
+            println!("ERROR: Can't bind to address {}: {}", address, e);
+            return;
+        }
+    };
+
     println!("Starting pft server v{}.", env!("CARGO_PKG_VERSION"));
     println!("Listening on {}", address);
     println!("One-time password: {}", otp);

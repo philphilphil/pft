@@ -29,7 +29,7 @@ pub fn start(address: &SocketAddr) {
             println!("{}", response.0);
         }
         Err(e) => {
-            println!("Failed to connect: {}", e);
+            println!("ERROR: Failed to connect to {}: {}", address, e);
         }
     }
 }
