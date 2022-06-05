@@ -43,7 +43,8 @@ impl Request {
                 buf.write_all(filename_bytes)?;
 
                 let mut file = File::open(filename).unwrap();
-                let mut file_buf = [0; 4096];
+                let size = file.metadata().unwrap().len();
+                let mut file_buf = vec![0; size as usize];
 
                 let n = file.read(&mut file_buf).unwrap();
                 buf.write_all(&file_buf[..n]).unwrap();
@@ -66,7 +67,10 @@ impl Request {
 
                 io::copy(&mut buf, &mut file).unwrap();
 
-                println!("INFO [{}]: Successfully transfered {}.", address, &filename);
+                println!(
+                    r#"INFO [{}]: Successfully transfered "{}"."#,
+                    address, &filename
+                );
                 Ok(Request::UploadFile { filename })
             }
             _ => todo!(),
