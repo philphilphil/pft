@@ -1,5 +1,6 @@
 use crate::{extract_string, write_string};
 use byteorder::{ReadBytesExt, WriteBytesExt};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::{
     fs::File,
     io::{self, Read, Write},
@@ -112,7 +113,12 @@ impl Request {
                 match transfer_type {
                     TransferType::Normal | TransferType::Replace => {}
                     TransferType::KeepBoth => {
-                        filename = format!("{}_{}", "2", filename);
+                        let prefix: String = thread_rng()
+                            .sample_iter(&Alphanumeric)
+                            .take(5)
+                            .map(char::from)
+                            .collect();
+                        filename = format!("{}_{}", prefix, filename);
                     }
                 }
 

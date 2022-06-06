@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-// use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
 use crate::{
     request::Request,
@@ -12,12 +12,12 @@ use crate::{
 };
 
 pub fn start(address: &SocketAddr) -> io::Result<()> {
-    // let cotp: String = thread_rng()
-    //     .sample_iter(&Alphanumeric)
-    //     .take(30)
-    //     .map(char::from)
-    //     .collect();
-    let cotp = "abc".to_string();
+    let generated_pw: String = thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(30)
+        .map(char::from)
+        .collect();
+    // let cotp = "abc".to_string();
 
     let listener = match TcpListener::bind(address) {
         Ok(l) => l,
@@ -29,7 +29,7 @@ pub fn start(address: &SocketAddr) -> io::Result<()> {
 
     println!("Starting pft server v{}.", env!("CARGO_PKG_VERSION"));
     println!("Listening on {}", address);
-    println!("One-time password: {}", cotp);
+    println!("One-time password: {}", generated_pw);
     for mut stream in listener.incoming().flatten() {
         let client_addr = stream.peer_addr().unwrap().to_string();
         loop {
@@ -41,7 +41,7 @@ pub fn start(address: &SocketAddr) -> io::Result<()> {
             let request = Request::deserialize(&mut stream, &client_addr).unwrap();
             match request {
                 Request::AnnounceFileTransfer { filename, otp } => {
-                    if cotp != otp {
+                    if generated_pw != otp {
                         let resp = Response {
                             message: "".to_string(),
                             error: Some(FileTransferError::InvalidPassword),

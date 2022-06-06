@@ -21,16 +21,3 @@ fn write_string(buf: &mut impl Write, string: &String) -> io::Result<()> {
     buf.write_all(string_bytes)?;
     Ok(())
 }
-
-// #[test]
-// fn test_request_roundtrip() {
-//     let req = request::Request::TestOTP(String::from("Hello"));
-
-//     let mut bytes: Vec<u8> = vec![];
-//     req.serialize(&mut bytes).unwrap();
-
-//     let mut reader = io::Cursor::new(bytes); // Simulating TcpStream
-//     let roundtrip_req = request::Request::deserialize(&mut reader).unwrap();
-
-//     assert!(matches!(roundtrip_req, request::Request::TestOTP(_)));
-// }
