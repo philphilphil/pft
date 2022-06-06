@@ -1,5 +1,5 @@
-use crate::extract_string;
-use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
+use crate::{extract_string, write_string};
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use std::io::{self, Read, Write};
 
 pub struct Response {
@@ -33,12 +33,9 @@ impl From<u8> for FileTransferError {
 
 impl Response {
     pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
-        let message = self.message.as_bytes();
-        buf.write_u16::<NetworkEndian>(message.len() as u16)?;
-        buf.write_all(message)?;
+        write_string(buf, &self.message)?;
 
         if let Some(e) = &self.error {
-            buf.write_u8(1)?;
             buf.write_u8(e.into())?;
         } else {
             buf.write_u8(0)?;
@@ -50,11 +47,10 @@ impl Response {
     pub fn deserialize(mut buf: &mut impl Read) -> io::Result<Response> {
         let message = extract_string(&mut buf)?;
 
-        let contains_error = buf.read_u8()?;
-        let error = if contains_error == 1 {
-            Some(buf.read_u8().unwrap().into())
-        } else {
+        let error = if buf.read_u8()? == 0 {
             None
+        } else {
+            Some(buf.read_u8().unwrap().into())
         };
 
         Ok(Response { message, error })
