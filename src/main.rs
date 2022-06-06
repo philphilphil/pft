@@ -1,7 +1,8 @@
 use std::{
+    ffi::OsStr,
     io,
     net::{SocketAddr, ToSocketAddrs},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use clap::{Parser, Subcommand};
@@ -26,7 +27,7 @@ enum Mode {
         #[clap(required = true)]
         otp: String,
         /// Path to the file to upload
-        #[clap(required = true, parse(from_os_str))]
+        #[clap(required = true, parse(try_from_os_str=parse_file_path))]
         file_path: PathBuf,
     },
     /// Runs the server
@@ -51,6 +52,18 @@ fn main() {
         Mode::Server { .. } => server::start(&address),
         Mode::Client { otp, file_path, .. } => client::start(&address, otp, file_path),
     }
+}
+
+fn parse_file_path(str: &OsStr) -> Result<PathBuf, String> {
+    let path = Path::new(&str);
+
+    if !path.exists() {
+        return Err(String::from("File does not exist."));
+    } else if !path.is_file() {
+        return Err(String::from("Path is not a file."));
+    }
+
+    Ok(path.to_path_buf())
 }
 
 fn get_addr(mode: &Mode) -> io::Result<SocketAddr> {
