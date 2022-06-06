@@ -1,16 +1,45 @@
-use crate::extract_string;
-use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
+use crate::{extract_string, write_string};
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use std::{
     fs::File,
     io::{self, Read, Write},
 };
 
-#[derive(Debug)]
 pub enum Request {
     /// Announce file transfer to server
     AnnounceFileTransfer { filename: String, otp: String },
     /// Upload File
-    UploadFile { filename: String },
+    UploadFile {
+        transfer_type: TransferType,
+        filename: String,
+    },
+}
+
+pub enum TransferType {
+    Normal,
+    Replace,
+    KeepBoth,
+}
+
+impl From<&TransferType> for u8 {
+    fn from(error: &TransferType) -> Self {
+        match error {
+            TransferType::Normal => 1,
+            TransferType::Replace => 2,
+            TransferType::KeepBoth => 3,
+        }
+    }
+}
+
+impl From<u8> for TransferType {
+    fn from(e: u8) -> Self {
+        match e {
+            1 => TransferType::Normal,
+            2 => TransferType::Replace,
+            3 => TransferType::KeepBoth,
+            _ => panic!("Error deserializing."),
+        }
+    }
 }
 
 impl From<&Request> for u8 {
@@ -24,27 +53,31 @@ impl From<&Request> for u8 {
 
 impl Request {
     pub fn serialize(&self, buf: &mut impl Write) -> io::Result<()> {
+        // Request Type
         buf.write_u8(self.into())?;
 
         match self {
             Request::AnnounceFileTransfer { filename, otp } => {
-                let filename = filename.as_bytes();
-                buf.write_u16::<NetworkEndian>(filename.len() as u16)?;
-                buf.write_all(filename)?;
+                // filename
+                write_string(buf, filename)?;
 
-                let otp = otp.as_bytes();
-                buf.write_u16::<NetworkEndian>(otp.len() as u16)?;
-                buf.write_all(otp)?;
+                // password
+                write_string(buf, otp)?;
             }
-            Request::UploadFile { filename } => {
-                let filename_bytes = filename.as_bytes();
-                buf.write_u16::<NetworkEndian>(filename_bytes.len() as u16)?;
-                buf.write_all(filename_bytes)?;
+            Request::UploadFile {
+                transfer_type,
+                filename,
+            } => {
+                // transfer type
+                buf.write_u8(transfer_type.into())?;
 
+                // filename
+                write_string(buf, filename)?;
+
+                // file
                 let mut file = File::open(filename).unwrap();
                 let size = file.metadata().unwrap().len();
                 let mut transfered: usize = 0;
-                // let mut file_buf = vec![0; size as usize];
 
                 loop {
                     print_transfer_progress(transfered as u64, size);
@@ -66,22 +99,35 @@ impl Request {
     pub fn deserialize(mut buf: &mut impl Read, address: &str) -> io::Result<Request> {
         match buf.read_u8()? {
             1 => {
-                let filename = format!("server/{}", extract_string(&mut buf)?);
+                let filename = extract_string(&mut buf)?;
                 let otp = extract_string(&mut buf)?;
                 Ok(Request::AnnounceFileTransfer { filename, otp })
             }
             2 => {
                 println!("INFO [{}]: Receiving file..", address);
-                let filename = format!("server/{}", extract_string(&mut buf)?);
-                let mut file = File::create(&filename).unwrap();
 
+                let transfer_type = buf.read_u8().unwrap().into();
+                let mut filename = extract_string(&mut buf)?;
+
+                match transfer_type {
+                    TransferType::Normal | TransferType::Replace => {}
+                    TransferType::KeepBoth => {
+                        filename = format!("{}_{}", "2", filename);
+                    }
+                }
+
+                let mut file = File::create(&filename).unwrap();
                 io::copy(&mut buf, &mut file).unwrap();
 
                 println!(
                     r#"INFO [{}]: Successfully transfered "{}"."#,
                     address, &filename
                 );
-                Ok(Request::UploadFile { filename })
+
+                Ok(Request::UploadFile {
+                    transfer_type,
+                    filename,
+                })
             }
             _ => todo!(),
         }

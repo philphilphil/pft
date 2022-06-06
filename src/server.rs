@@ -1,5 +1,5 @@
 use std::{
-    io::Write,
+    io::{self, Write},
     net::{SocketAddr, TcpListener},
     path::Path,
 };
@@ -11,7 +11,7 @@ use crate::{
     response::{FileTransferError, Response},
 };
 
-pub fn start(address: &SocketAddr) {
+pub fn start(address: &SocketAddr) -> io::Result<()> {
     // let cotp: String = thread_rng()
     //     .sample_iter(&Alphanumeric)
     //     .take(30)
@@ -23,7 +23,7 @@ pub fn start(address: &SocketAddr) {
         Ok(l) => l,
         Err(e) => {
             println!("ERROR. Can't bind to address {}: {}", address, e);
-            return;
+            return Ok(());
         }
     };
 
@@ -44,7 +44,7 @@ pub fn start(address: &SocketAddr) {
                     if cotp != otp {
                         let resp = Response {
                             message: "".to_string(),
-                            error: Some(FileTransferError::InvalidOneTimePassword),
+                            error: Some(FileTransferError::InvalidPassword),
                         };
                         resp.serialize(&mut stream).unwrap();
                         stream.flush().unwrap();
@@ -72,7 +72,10 @@ pub fn start(address: &SocketAddr) {
                         stream.flush().unwrap();
                     }
                 }
-                Request::UploadFile { filename } => {
+                Request::UploadFile {
+                    transfer_type: _,
+                    filename,
+                } => {
                     let resp = Response {
                         message: format!(r#"Successfully transfered "{}""#, filename),
                         error: None,
@@ -83,4 +86,5 @@ pub fn start(address: &SocketAddr) {
             }
         }
     }
+    Ok(())
 }

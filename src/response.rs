@@ -2,22 +2,20 @@ use crate::extract_string;
 use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
 use std::io::{self, Read, Write};
 
-#[derive(Debug)]
 pub struct Response {
     pub message: String,
     pub error: Option<FileTransferError>,
 }
 
-#[derive(Debug)]
 pub enum FileTransferError {
-    InvalidOneTimePassword,
+    InvalidPassword,
     FileAlreadyExists,
 }
 
 impl From<&FileTransferError> for u8 {
     fn from(error: &FileTransferError) -> Self {
         match error {
-            FileTransferError::InvalidOneTimePassword => 1,
+            FileTransferError::InvalidPassword => 1,
             FileTransferError::FileAlreadyExists => 2,
         }
     }
@@ -26,9 +24,9 @@ impl From<&FileTransferError> for u8 {
 impl From<u8> for FileTransferError {
     fn from(e: u8) -> Self {
         match e {
-            1 => FileTransferError::InvalidOneTimePassword,
+            1 => FileTransferError::InvalidPassword,
             2 => FileTransferError::FileAlreadyExists,
-            _ => panic!("Error deserializin."),
+            _ => panic!("Error deserializing."),
         }
     }
 }

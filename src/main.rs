@@ -49,8 +49,10 @@ fn main() {
         }
     };
     match args.command {
-        Mode::Server { .. } => server::start(&address),
-        Mode::Client { otp, file_path, .. } => client::start(&address, otp, file_path),
+        Mode::Server { .. } => server::start(&address).expect("Error during connection."),
+        Mode::Client { otp, file_path, .. } => {
+            client::start(&address, otp, file_path).expect("Error during connection.")
+        }
     }
 }
 
