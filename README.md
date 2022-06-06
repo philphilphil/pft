@@ -20,7 +20,7 @@ tbd.
 
 #### Transfer Type
 - Normal = 1
-- Repalce = 2
+- Replace = 2
 - KeepBoth = 3
 
 ### Server Response
