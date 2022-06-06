@@ -47,10 +47,12 @@ impl Response {
     pub fn deserialize(mut buf: &mut impl Read) -> io::Result<Response> {
         let message = extract_string(&mut buf)?;
 
-        let error = if buf.read_u8()? == 0 {
+        let pos_error = buf.read_u8()?;
+
+        let error = if pos_error == 0 {
             None
         } else {
-            Some(buf.read_u8().unwrap().into())
+            Some(pos_error.into())
         };
 
         Ok(Response { message, error })
