@@ -1,8 +1,15 @@
 # pft
 sim**p**le **f**ile **t**ransfer server/client built to learn more about Rust, TCP and protocols.
-![](demo.gif)
+
+<img src="demo.gif" height="350"/>
+
 ## Usage
-tbd.
+Start the server with `pft server <ADDRESS>`.
+Use the client with the adress to the server, the password the server generated and a path to a file to upload. `pft client <ADDRESS> <OTP> <FILE_PATH>`
+
+E.g.:
+- `pft server 0.0.0.0:3333`
+- `pft client phib.io:3333 8NCtXNKp9vxPudq165Foa6mKBvmzqg testbig.zip`
 ## Application Layer Protocol
 ### Client Requests 
 #### AnnounceFileTransfer
