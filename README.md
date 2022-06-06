@@ -9,6 +9,11 @@ tbd.
 | ---- | ------ | ----------- | ---------- | --------------- |
 | Request type | filename length | filename value bytes | password length | password value bytes |
 
+#### UploadFile
+| u8           | u8            |  u16   | [u8]                 | [u8]             |
+| ------------ | ------------- | --- | -------------------- | ---------------- |
+| Request type | transfer type |  filename length   | filename value bytes | file value bytes |
+
 #### Request Type
 - AnnounceFileTransfer = 1
 - UploadFile = 2
@@ -17,11 +22,6 @@ tbd.
 - Normal = 1
 - Repalce = 2
 - KeepBoth = 3
-
-#### UploadFile
-| u8   | u8     | [u8]        |  [u8]   | 
-| ---- | ------ | ----------- | ---------- | 
-| Request type | transfer type | filename value bytes | file value bytes | 
 
 ### Server Response
 #### Response
