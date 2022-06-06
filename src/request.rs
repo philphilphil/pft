@@ -92,7 +92,8 @@ fn print_transfer_progress(transfered: u64, file_size: u64) {
     let trans_kb = transfered / 1000;
     let file_size_kb = file_size / 1000;
 
-    if file_size_kb > 1000 {
+    // for files bigger then 5000kb display in mb
+    if file_size_kb > 5000 {
         print!(
             "\rUploading {:.2}/{:.2} MB...",
             trans_kb as f64 / 1000.0,
