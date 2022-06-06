@@ -3,7 +3,6 @@ use byteorder::{NetworkEndian, ReadBytesExt, WriteBytesExt};
 use std::{
     fs::File,
     io::{self, Read, Write},
-    net::SocketAddr,
 };
 
 #[derive(Debug)]
@@ -44,10 +43,21 @@ impl Request {
 
                 let mut file = File::open(filename).unwrap();
                 let size = file.metadata().unwrap().len();
-                let mut file_buf = vec![0; size as usize];
+                let mut transfered: usize = 0;
+                // let mut file_buf = vec![0; size as usize];
 
-                let n = file.read(&mut file_buf).unwrap();
-                buf.write_all(&file_buf[..n]).unwrap();
+                loop {
+                    print_transfer_progress(transfered as u64, size);
+                    if size == transfered as u64 {
+                        break;
+                    }
+
+                    let mut buffer = [0; 1024];
+                    transfered += file.read(&mut buffer).unwrap();
+                    buf.write_all(&buffer).unwrap();
+                }
+
+                println!();
             }
         }
         Ok(())
@@ -75,5 +85,20 @@ impl Request {
             }
             _ => todo!(),
         }
+    }
+}
+
+fn print_transfer_progress(transfered: u64, file_size: u64) {
+    let trans_kb = transfered / 1000;
+    let file_size_kb = file_size / 1000;
+
+    if file_size_kb > 1000 {
+        print!(
+            "\rUploading {:.2}/{:.2} MB...",
+            trans_kb as f64 / 1000.0,
+            file_size_kb as f64 / 1000.0
+        );
+    } else {
+        print!("\rUploading {}/{} kB...", trans_kb, file_size_kb);
     }
 }

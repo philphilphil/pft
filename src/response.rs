@@ -28,7 +28,7 @@ impl From<u8> for FileTransferError {
         match e {
             1 => FileTransferError::InvalidOneTimePassword,
             2 => FileTransferError::FileAlreadyExists,
-            _ => panic!("Error deserializin:write_u8g."),
+            _ => panic!("Error deserializin."),
         }
     }
 }
